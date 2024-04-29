@@ -4,20 +4,35 @@
 @using PoBabyNames.Models
    @using Radzen
    @inject ApplicationDbContext DbContext
+   @using Microsoft.AspNetCore.Authorization
+   @inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
 
 <h3>Rate Names</h3>
-<div>
-    @if (currentName != null)
-    {
-        <p>Rate the name: @currentName.NameText</p>
-        <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1" ShowTicks="true" />
-        <RadzenButton Text="Submit" Click="@SubmitRating" />
-    }
-    else
-    {
-        <p>No more names to rate.</p>
-    }
-</div>
+
+
+
+<AuthorizeView>
+    <Authorized>
+        <div>
+            @if (currentName != null)
+            {
+                <p>Rate the name: @currentName.NameText</p>
+                <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1" ShowTicks="true" />
+                <RadzenButton Text="Submit" Click="@SubmitRating" />
+            }
+            else
+            {
+                <p>No more names to rate.</p>
+            }
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <h3>User must log in</h3>
+    </NotAuthorized>
+</AuthorizeView>
+
+
 
 @code {
     private int currentRating;
@@ -31,7 +46,21 @@
 
     private async Task SubmitRating()
     {
-        var rating = new Rating { NameId = currentName.Id, RatingValue = currentRating, GroupId = groupId.Value };
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+        {
+            throw new InvalidOperationException("User ID is not available.");
+        }
+
+        var rating = new Rating
+            {
+                UserId = userId,
+                NameId = currentName.Id,
+                GroupId = groupId.Value,
+                RatingValue = currentRating
+            };
+
         DbContext.Ratings.Add(rating);
         await DbContext.SaveChangesAsync();
 
@@ -44,4 +73,4 @@
             .OrderBy(n => n.Id)
             .FirstOrDefaultAsync(n => !DbContext.Ratings.Any(r => r.NameId == n.Id && r.GroupId == groupId));
     }
-   }
+}

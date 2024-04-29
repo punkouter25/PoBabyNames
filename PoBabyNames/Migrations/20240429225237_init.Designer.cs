@@ -11,8 +11,8 @@ using PoBabyNames.Data;
 namespace PoBabyNames.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240429190703_UpdateIdentity")]
-    partial class UpdateIdentity
+    [Migration("20240429225237_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -166,6 +166,10 @@ namespace PoBabyNames.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int?>("GroupId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("GroupId");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");

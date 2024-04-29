@@ -16,11 +16,16 @@
         {
             <div class="alert alert-info">@Message</div>
         }
-        <RadzenDropDown Data="@groups" TextProperty="GroupName" ValueProperty="GroupId" @bind-Value="selectedGroupId"
-            Style="width: 300px;" Placeholder="Select a group" />
-        <RadzenTextBox @bind-Value="newGroupName" Style="width: 300px;" Placeholder="Or enter new group name" />
-        <RadzenButton Text="Submit" Click="@SubmitGroup" />
+
+        @if (string.IsNullOrEmpty(Message))
+        {
+            <RadzenDropDown Data="@groups" TextProperty="GroupName" ValueProperty="GroupId" @bind-Value="selectedGroupId"
+                            Style="width: 300px;" Placeholder="Select a group" />
+            <RadzenTextBox @bind-Value="newGroupName" Style="width: 300px;" Placeholder="Or enter new group name" />
+            <RadzenButton Text="Submit" Click="@SubmitGroup" />
+        }
     </Authorized>
+
     <NotAuthorized>
         <h3>User must log in</h3>
     </NotAuthorized>
@@ -34,13 +39,20 @@
 
     protected override async Task OnInitializedAsync()
     {
-        groups = await DbContext.Groups.ToListAsync();
         var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
-        selectedGroupId = currentUser.GroupId; // Assuming GroupId is a property of the ApplicationUser
-        if (selectedGroupId.HasValue)
+
+        if (currentUser == null)
         {
-            NavigationManager.NavigateTo("/settings", true);
-            Message = "GROUP ALREADY SET";
+            NavigationManager.NavigateTo("account/login", true);
+        }
+        else
+        {
+            groups = await DbContext.Groups.ToListAsync();
+            selectedGroupId = currentUser.GroupId; // Assuming GroupId is a property of the ApplicationUser
+            if (selectedGroupId.HasValue)
+            {
+                Message = "GROUP ALREADY SET";
+            }
         }
     }
 
@@ -52,6 +64,17 @@
             DbContext.Groups.Add(group);
             await DbContext.SaveChangesAsync();
             groups.Add(group); // Update the list to include the new group
+
+            // Get the current user
+            var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
+
+            if (currentUser != null)
+            {
+                // Update the GroupId in the user table
+                currentUser.GroupId = group.GroupId;
+                await UserManager.UpdateAsync(currentUser);
+            }
+
             NavigationManager.NavigateTo("/", forceLoad: true); // Redirect to home page
         }
         else if (selectedGroupId.HasValue)

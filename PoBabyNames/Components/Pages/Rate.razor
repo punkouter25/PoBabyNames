@@ -1,16 +1,18 @@
 ﻿   @page "/rate"
+@using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using PoBabyNames.Data
 @using PoBabyNames.Models
+@inject NavigationManager NavigationManager
    @using Radzen
    @inject ApplicationDbContext DbContext
    @using Microsoft.AspNetCore.Authorization
    @inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor
 
 <h3>Rate Names</h3>
-
-
 
 <AuthorizeView>
     <Authorized>
@@ -41,6 +43,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
+
+        if (currentUser == null)
+        {
+            NavigationManager.NavigateTo("account/login", true);
+        }
+
         await LoadNextName();
     }
 

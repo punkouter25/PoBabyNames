@@ -164,6 +164,10 @@ namespace PoBabyNames.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("GroupId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("GroupId");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");
 

@@ -27,11 +27,13 @@ public class DataImportService
         {
             await ClearNamesTableAsync();  // Clear the table before importing new data
 
-            string filePath = "NationalNames.csv";
+            // string filePath = "NationalNames.csv";
+             string filePath = "boy_names_2022.csv";
+
             using var reader = new StreamReader(filePath);
             using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = true });
-            var records = csv.GetRecords<Name>().ToList(); // Convert to List to catch any parsing errors
-
+            //var records = csv.GetRecords<Name>().ToList(); // Convert to List to catch any parsing errors
+            var records = csv.GetRecords<Name>().Take(10).ToList(); // Fetch only the first 10 records
             if (records.Any())
             {
                 _dbContext.Names.AddRange(records);

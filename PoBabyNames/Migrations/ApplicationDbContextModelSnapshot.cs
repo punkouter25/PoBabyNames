@@ -234,16 +234,9 @@ namespace PoBabyNames.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Gender")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("NameText")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

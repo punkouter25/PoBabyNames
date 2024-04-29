@@ -11,7 +11,7 @@ using PoBabyNames.Data;
 namespace PoBabyNames.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240429225237_init")]
+    [Migration("20240429232211_init")]
     partial class init
     {
         /// <inheritdoc />
@@ -237,16 +237,9 @@ namespace PoBabyNames.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Gender")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("NameText")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

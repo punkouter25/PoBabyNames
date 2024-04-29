@@ -70,9 +70,7 @@ namespace PoBabyNames.Migrations
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    NameText = table.Column<string>(type: "TEXT", nullable: false),
-                    Gender = table.Column<string>(type: "TEXT", nullable: false),
-                    Year = table.Column<int>(type: "INTEGER", nullable: false)
+                    NameText = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

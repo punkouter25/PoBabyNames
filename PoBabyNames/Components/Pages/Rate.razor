@@ -1,0 +1,47 @@
+﻿   @page "/rate"
+@using Microsoft.EntityFrameworkCore
+@using PoBabyNames.Data
+@using PoBabyNames.Models
+   @using Radzen
+   @inject ApplicationDbContext DbContext
+
+<h3>Rate Names</h3>
+<div>
+    @if (currentName != null)
+    {
+        <p>Rate the name: @currentName.NameText</p>
+        <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1" ShowTicks="true" />
+        <RadzenButton Text="Submit" Click="@SubmitRating" />
+    }
+    else
+    {
+        <p>No more names to rate.</p>
+    }
+</div>
+
+@code {
+    private int currentRating;
+    private Name currentName;
+    private int? groupId = 1; // Assume a group ID is set
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNextName();
+    }
+
+    private async Task SubmitRating()
+    {
+        var rating = new Rating { NameId = currentName.Id, RatingValue = currentRating, GroupId = groupId.Value };
+        DbContext.Ratings.Add(rating);
+        await DbContext.SaveChangesAsync();
+
+        await LoadNextName();
+    }
+
+    private async Task LoadNextName()
+    {
+        currentName = await DbContext.Names
+            .OrderBy(n => n.Id)
+            .FirstOrDefaultAsync(n => !DbContext.Ratings.Any(r => r.NameId == n.Id && r.GroupId == groupId));
+    }
+   }

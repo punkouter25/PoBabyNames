@@ -1,0 +1,37 @@
+﻿   @page "/settings"
+@using Microsoft.EntityFrameworkCore
+@using PoBabyNames.Data
+   @using Radzen
+   @inject ApplicationDbContext DbContext
+
+<h3>Settings</h3>
+
+<RadzenDropDown Data="@groups" TextProperty="GroupName" ValueProperty="GroupId" @bind-Value="selectedGroupId" Style="width: 300px;" Placeholder="Select a group" />
+<RadzenTextBox @bind-Value="newGroupName" Style="width: 300px;" Placeholder="Or enter new group name" />
+<RadzenButton Text="Submit" Click="@SubmitGroup" />
+
+@code {
+    List<PoBabyNames.Models.Group> groups = new List<PoBabyNames.Models.Group>();
+    int? selectedGroupId;
+    string newGroupName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        groups = await DbContext.Groups.ToListAsync();
+    }
+
+    private async Task SubmitGroup()
+    {
+        if (!string.IsNullOrEmpty(newGroupName))
+        {
+            var group = new PoBabyNames.Models.Group { GroupName = newGroupName };
+            DbContext.Groups.Add(group);
+            await DbContext.SaveChangesAsync();
+            groups.Add(group); // Update the list to include the new group
+        }
+        else if (selectedGroupId.HasValue)
+        {
+            // Logic to handle joining an existing group
+        }
+    }
+   }

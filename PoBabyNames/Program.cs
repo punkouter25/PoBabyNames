@@ -57,6 +57,21 @@ builder.Services.AddAuthentication().AddGoogle(googleOptions =>
 builder.Services.AddScoped<Radzen.DialogService>();
 builder.Services.AddScoped<DataImportService>();
 
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddConsole();
+    loggingBuilder.AddDebug();
+});
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -65,6 +80,7 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseMigrationsEndPoint();
 }
 else
@@ -74,7 +90,6 @@ else
     app.UseHsts();
 }
 
-app.UseDeveloperExceptionPage();
 
 //app.UseHttpsRedirection();
 

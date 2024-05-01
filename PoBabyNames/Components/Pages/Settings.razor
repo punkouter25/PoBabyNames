@@ -11,7 +11,6 @@
 
 <AuthorizeView>
     <Authorized>
-        <h3>Settings</h3>
         @if (!string.IsNullOrEmpty(Message))
         {
             <div class="alert alert-info">@Message</div>
@@ -79,7 +78,10 @@
         }
         else if (selectedGroupId.HasValue)
         {
-            // Logic to handle joining an existing group
+            var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
+            currentUser.GroupId = selectedGroupId.Value;
+            await UserManager.UpdateAsync(currentUser);
+            NavigationManager.NavigateTo("/", forceLoad: true); // Redirect to home page
         }
     }
 }

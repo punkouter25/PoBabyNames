@@ -12,20 +12,18 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IHttpContextAccessor HttpContextAccessor
 
-<h3>Rate Names</h3>
-
 <AuthorizeView>
     <Authorized>
         <div>
             @if (currentName != null)
             {
                 <p>Rate the name: @currentName.NameText</p>
-                <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1" ShowTicks="true" />
+                <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1" ShowTicks="true" ShowValue="true" />
                 <RadzenButton Text="Submit" Click="@SubmitRating" />
             }
             else
             {
-                <p>No more names to rate.</p>
+                <div class="alert alert-info">No more names to rate.</div>
             }
         </div>
     </Authorized>
@@ -78,8 +76,9 @@
 
     private async Task LoadNextName()
     {
+        var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         currentName = await DbContext.Names
             .OrderBy(n => n.Id)
-            .FirstOrDefaultAsync(n => !DbContext.Ratings.Any(r => r.NameId == n.Id && r.GroupId == groupId));
+            .FirstOrDefaultAsync(n => !DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId));
     }
 }

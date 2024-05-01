@@ -1,15 +1,24 @@
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
+    color: #333;
+    background-color: #f4f4f4;
 }
 
 a, .btn-link {
     color: #006bb7;
 }
 
-.btn-primary {
+.btn-primary, button, .btn {
     color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    background-color: #0056b3;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-primary:hover, button:hover, .btn:hover {
+    background-color: #004494;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
@@ -32,8 +41,20 @@ h1:focus {
     outline: 1px solid #e50000;
 }
 
-.validation-message {
+.validation-message, .status-message, .alert {
     color: #e50000;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.text-danger {
+    color: #dc3545;
 }
 
 .blazor-error-boundary {
@@ -48,4 +69,16 @@ h1:focus {
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
+}
+input[type="text"], input[type="password"], input[type="email"], .form-control {
+    border: 1px solid #ccc;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 4px;
+}
+
+h1, h2, h3 {
+    color: #333;
+    font-weight: bold;
 }

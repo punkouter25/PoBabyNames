@@ -3,9 +3,9 @@
 @using Microsoft.EntityFrameworkCore
 @using PoBabyNames.Data
 @using PoBabyNames.Models
+@using Microsoft.AspNetCore.Authorization
 @inject DataImportService DataImportService
 @inject ApplicationDbContext DbContext
-@using Microsoft.AspNetCore.Authorization
 @inject IHttpContextAccessor HttpContextAccessor
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
@@ -14,10 +14,7 @@
 
 <AuthorizeView>
     <Authorized>
-        <h1>Hello, world!</h1>
-        <h2>Group: @groupName</h2>
-
-        Welcome to your new app.
+        <h1> Top 10 names decided by group: @groupName </h1>
 
         <button @onclick="ImportData" disabled="@isImporting">Import Data</button>
 
@@ -65,14 +62,15 @@
             groupName = currentGroup?.GroupName ?? "No group assigned";
 
             names = await DbContext.Names
-            .Select(n => new NameViewModel
-                {
-                    NameText = n.NameText,
-                    AverageRating = DbContext.Ratings
-                        .Where(r => r.NameId == n.Id)
-                        .Average(r => (double?)r.RatingValue) ?? 0.0
-                })
-            .ToListAsync();
+             .Select(n => new NameViewModel
+                 {
+                     NameText = n.NameText,
+                     AverageRating = DbContext.Ratings
+                                         .Where(r => r.NameId == n.Id)
+                                         .Average(r => (double?)r.RatingValue) ?? 0.0
+                 })
+             .OrderByDescending(n => n.AverageRating) // Add this line to sort by AverageRating descending
+             .ToListAsync();
         }
     }
 
@@ -80,6 +78,7 @@
     {
         isImporting = true;
         importMessage = null;
+
         try
         {
             await DataImportService.ImportCsvDataAsync();
@@ -89,6 +88,7 @@
         {
             importMessage = $"An error occurred: {ex.Message}";
         }
+
         isImporting = false;
     }
 }

@@ -32,6 +32,13 @@
             <Columns>
                 <RadzenGridColumn TItem="NameViewModel" Property="NameText" Title="Name" />
                 <RadzenGridColumn TItem="NameViewModel" Property="AverageRating" Title="Average Rating" />
+                @if (currentGroup != null)
+                {
+                    @foreach (var user in DbContext.Users.Where(u => u.GroupId == currentGroup.GroupId))
+                    {
+                        <RadzenGridColumn TItem="NameViewModel" Property=@($"UserRatings[{user.Id}]") Title=@($"{user.UserName}'s Rating") />
+                    }
+                }
             </Columns>
         </RadzenGrid>
     </Authorized>
@@ -46,7 +53,7 @@
     private bool isImporting = false;
     private string importMessage;
     private string groupName;
-
+    private Models.Group? currentGroup;
     List<NameViewModel> names = new List<NameViewModel>();
 
     protected override async Task OnInitializedAsync()
@@ -60,19 +67,38 @@
         }
         else
         {
-            var currentGroup = await DbContext.Groups.FindAsync(currentUser.GroupId);
+            currentGroup = await DbContext.Groups.FindAsync(currentUser.GroupId);
             groupName = currentGroup?.GroupName ?? "No group assigned";
 
-            names = await DbContext.Names
-             .Select(n => new NameViewModel
-                 {
-                     NameText = n.NameText,
-                     AverageRating = DbContext.Ratings
-                                         .Where(r => r.NameId == n.Id)
-                                         .Average(r => (double?)r.RatingValue) ?? 0.0
-                 })
-             .OrderByDescending(n => n.AverageRating)
-             .ToListAsync();
+            if (currentGroup != null)
+            {
+                var namesList = await DbContext.Names
+      .Select(n => new NameViewModel
+          {
+              NameText = n.NameText,
+              AverageRating = 0.0,  // Temporary placeholder
+              UserRatings = new Dictionary<string, int>()  // Temporary placeholder
+          })
+      .ToListAsync();
+
+                foreach (var nameViewModel in namesList)
+                {
+                    var ratings = await DbContext.Ratings
+                        .Where(r => r.NameId == DbContext.Names.FirstOrDefault(n => n.NameText == nameViewModel.NameText).Id)
+                        .ToListAsync();
+
+                    nameViewModel.AverageRating = ratings.Any() ? ratings.Average(r => r.RatingValue) : 0.0;
+
+                    var groupRatings = ratings
+                        .Where(r => r.GroupId == currentGroup.GroupId)
+                        .ToDictionary(r => r.UserId, r => r.RatingValue);
+
+                    nameViewModel.UserRatings = groupRatings;
+                }
+
+                namesList = namesList.OrderByDescending(n => n.AverageRating).ToList();
+
+            }
         }
     }
 

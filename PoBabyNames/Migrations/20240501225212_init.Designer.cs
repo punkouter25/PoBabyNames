@@ -11,7 +11,7 @@ using PoBabyNames.Data;
 namespace PoBabyNames.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240429232211_init")]
+    [Migration("20240501225212_init")]
     partial class init
     {
         /// <inheritdoc />

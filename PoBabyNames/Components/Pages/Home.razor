@@ -15,10 +15,8 @@
 
 <AuthorizeView>
     <Authorized>
-        <h1> Top 10 names decided by group: @groupName </h1>
-
+        <h1>Top 10 names decided by group: @groupName</h1>
         <button @onclick="ImportData" disabled="@isImporting">Import Data</button>
-
         @if (isImporting)
         {
             <p><em>Importing data...</em></p>
@@ -28,33 +26,25 @@
             <p>@importMessage</p>
         }
 
-        <RadzenGrid Data="@names" TItem="NameViewModel" ColumnWidth="auto" Style="width:100%">
+        <RadzenGrid Data="@namesList" TItem="NameViewModel" ColumnWidth="auto" Style="width:100%">
             <Columns>
                 <RadzenGridColumn TItem="NameViewModel" Property="NameText" Title="Name" />
                 <RadzenGridColumn TItem="NameViewModel" Property="AverageRating" Title="Average Rating" />
-                @if (currentGroup != null)
-                {
-                    @foreach (var user in DbContext.Users.Where(u => u.GroupId == currentGroup.GroupId))
-                    {
-                        <RadzenGridColumn TItem="NameViewModel" Property=@($"UserRatings[{user.Id}]") Title=@($"{user.UserName}'s Rating") />
-                    }
-                }
             </Columns>
         </RadzenGrid>
     </Authorized>
-
     <NotAuthorized>
         <h3>User must log in</h3>
     </NotAuthorized>
 </AuthorizeView>
-
 
 @code {
     private bool isImporting = false;
     private string importMessage;
     private string groupName;
     private Models.Group? currentGroup;
-    List<NameViewModel> names = new List<NameViewModel>();
+    private List<NameViewModel> namesList = new List<NameViewModel>();
+    private Dictionary<string, string> userRatings = new Dictionary<string, string>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,34 +62,36 @@
 
             if (currentGroup != null)
             {
-                var namesList = await DbContext.Names
-      .Select(n => new NameViewModel
-          {
-              NameText = n.NameText,
-              AverageRating = 0.0,  // Temporary placeholder
-              UserRatings = new Dictionary<string, int>()  // Temporary placeholder
-          })
-      .ToListAsync();
-
-                foreach (var nameViewModel in namesList)
-                {
-                    var ratings = await DbContext.Ratings
-                        .Where(r => r.NameId == DbContext.Names.FirstOrDefault(n => n.NameText == nameViewModel.NameText).Id)
-                        .ToListAsync();
-
-                    nameViewModel.AverageRating = ratings.Any() ? ratings.Average(r => r.RatingValue) : 0.0;
-
-                    var groupRatings = ratings
-                        .Where(r => r.GroupId == currentGroup.GroupId)
-                        .ToDictionary(r => r.UserId, r => r.RatingValue);
-
-                    nameViewModel.UserRatings = groupRatings;
-                }
-
-                namesList = namesList.OrderByDescending(n => n.AverageRating).ToList();
-
+                namesList = await LoadNamesAsync();
             }
         }
+    }
+
+    private async Task<List<NameViewModel>> LoadNamesAsync()
+    {
+        var names = await DbContext.Names.ToListAsync();
+        var namesList = new List<NameViewModel>();
+
+        foreach (var name in names)
+        {
+            var ratings = await DbContext.Ratings.Where(r => r.NameId == name.Id && r.GroupId == currentGroup.GroupId).ToListAsync();
+            var averageRating = ratings.Any() ? ratings.Average(r => r.RatingValue) : 0.0;
+
+            // Convert user ratings from string to int
+            var userRatings = ratings.ToDictionary(
+                r => r.UserId.ToString(),
+                r => int.Parse(r.RatingValue.ToString()) // Ensure that the RatingValue is correctly parsed to int
+            );
+
+            namesList.Add(new NameViewModel
+                {
+                    NameText = name.NameText,
+                    AverageRating = averageRating,
+                    UserRatings = userRatings
+                });
+        }
+
+        return namesList.OrderByDescending(n => n.AverageRating).ToList();
     }
 
     private async Task ImportData()

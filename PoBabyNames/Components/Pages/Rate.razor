@@ -15,12 +15,16 @@
 <AuthorizeView>
     <Authorized>
         <div>
-            @if (currentName != null)
+            @if (groupId.HasValue && currentName != null)
             {
                 <p>Rate the name: @currentName.NameText</p>
                 <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1" ShowTicks="true" ShowValue="true" />
                 <p>Current Rating: @currentRating</p>
                 <RadzenButton Text="Submit" Click="@SubmitRating" />
+            }
+            else if (!groupId.HasValue)
+            {
+                <div class="alert alert-info">Please select a group to start rating names.</div>
             }
             else
             {
@@ -38,7 +42,7 @@
 @code {
     private int currentRating;
     private Name currentName;
-    private int? groupId = 1; // Assume a group ID is set
+    private int? groupId = null; // Assume a group ID is set
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,14 +52,23 @@
         {
             NavigationManager.NavigateTo("account/login", true);
         }
-
-        await LoadNextName();
+        else if (!currentUser.GroupId.HasValue)
+        {
+            groupId = null; // Ensure groupId is null if not set
+            // Display message to user about needing to be in a group
+        }
+        else
+        {
+            groupId = currentUser.GroupId; // Use the GroupId from currentUser
+            await LoadNextName();
+        }
     }
 
     private async Task SubmitRating()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
         if (userId == null)
         {
             throw new InvalidOperationException("User ID is not available.");
@@ -71,12 +84,16 @@
 
         DbContext.Ratings.Add(rating);
         await DbContext.SaveChangesAsync();
-
         await LoadNextName();
     }
 
     private async Task LoadNextName()
     {
+        if (!groupId.HasValue)
+        {
+            currentName = null; // Ensure no name is loaded
+            return;
+        }
         var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         currentName = await DbContext.Names
             .OrderBy(n => n.Id)

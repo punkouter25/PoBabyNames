@@ -9,6 +9,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>Home</PageTitle>
 
@@ -50,7 +51,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var currentUser = authState.User.Identity.IsAuthenticated ? await UserManager.GetUserAsync(authState.User) : null;
 
         if (currentUser == null)
         {
@@ -58,7 +60,7 @@
         }
         else
         {
-            var currentGroup = currentUser != null ? await DbContext.Groups.FindAsync(currentUser.GroupId) : null;
+            var currentGroup = await DbContext.Groups.FindAsync(currentUser.GroupId);
             groupName = currentGroup?.GroupName ?? "No group assigned";
 
             names = await DbContext.Names
@@ -69,7 +71,7 @@
                                          .Where(r => r.NameId == n.Id)
                                          .Average(r => (double?)r.RatingValue) ?? 0.0
                  })
-             .OrderByDescending(n => n.AverageRating) // Add this line to sort by AverageRating descending
+             .OrderByDescending(n => n.AverageRating)
              .ToListAsync();
         }
     }

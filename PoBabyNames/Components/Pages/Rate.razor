@@ -19,6 +19,7 @@
             {
                 <p>Rate the name: @currentName.NameText</p>
                 <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1" ShowTicks="true" ShowValue="true" />
+                <p>Current Rating: @currentRating</p>
                 <RadzenButton Text="Submit" Click="@SubmitRating" />
             }
             else

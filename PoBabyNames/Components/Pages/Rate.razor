@@ -20,6 +20,7 @@
                 <p>Rate the name: @currentName.NameText</p>
                 <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1" ShowTicks="true" ShowValue="true" />
                 <p>Current Rating: @currentRating</p>
+                <p>Rated Names = @ratedNamesCount out of @totalNames</p>
                 <RadzenButton Text="Submit" Click="@SubmitRating" />
             }
             else if (!groupId.HasValue)
@@ -30,6 +31,7 @@
             {
                 <div class="alert alert-info">No more names to rate.</div>
             }
+            <RadzenButton Text="Reset Ratings" Click="@ResetRatings" Style="margin-left: 10px;" />
         </div>
     </Authorized>
     <NotAuthorized>
@@ -43,6 +45,8 @@
     private int currentRating;
     private Name currentName;
     private int? groupId = null; // Assume a group ID is set
+    private int totalNames;
+    private int ratedNamesCount;
 
     protected override async Task OnInitializedAsync()
     {
@@ -55,7 +59,7 @@
         else if (!currentUser.GroupId.HasValue)
         {
             groupId = null; // Ensure groupId is null if not set
-            // Display message to user about needing to be in a group
+                            // Display message to user about needing to be in a group
         }
         else
         {
@@ -87,6 +91,15 @@
         await LoadNextName();
     }
 
+    private async Task ResetRatings()
+    {
+        var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var ratings = await DbContext.Ratings.Where(r => r.UserId == userId && r.GroupId == groupId).ToListAsync();
+        DbContext.Ratings.RemoveRange(ratings);
+        await DbContext.SaveChangesAsync();
+        await LoadNextName(); // Optionally reload the name to rate
+    }
+
     private async Task LoadNextName()
     {
         if (!groupId.HasValue)
@@ -95,6 +108,8 @@
             return;
         }
         var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        totalNames = await DbContext.Names.CountAsync();
+        ratedNamesCount = await DbContext.Ratings.CountAsync(r => r.UserId == userId && r.GroupId == groupId);
         currentName = await DbContext.Names
             .OrderBy(n => n.Id)
             .FirstOrDefaultAsync(n => !DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId));

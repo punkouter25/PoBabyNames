@@ -28,7 +28,7 @@ public class DataImportService
             await ClearNamesTableAsync();  // Clear the table before importing new data
 
             // string filePath = "NationalNames.csv";
-             string filePath = "boy_names_2022.csv";
+             string filePath = "names100.csv";
 
             using var reader = new StreamReader(filePath);
             using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = true });

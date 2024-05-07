@@ -10,6 +10,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
 
 <PageTitle>Home</PageTitle>
 
@@ -69,7 +70,10 @@
 
     private async Task<List<NameViewModel>> LoadNamesAsync()
     {
-        var names = await DbContext.Names.ToListAsync();
+        var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var names = await DbContext.Names
+            .Where(n => DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId))
+            .ToListAsync();
         var namesList = new List<NameViewModel>();
 
         foreach (var name in names)
@@ -77,10 +81,9 @@
             var ratings = await DbContext.Ratings.Where(r => r.NameId == name.Id && r.GroupId == currentGroup.GroupId).ToListAsync();
             var averageRating = ratings.Any() ? ratings.Average(r => r.RatingValue) : 0.0;
 
-            // Convert user ratings from string to int
             var userRatings = ratings.ToDictionary(
                 r => r.UserId.ToString(),
-                r => int.Parse(r.RatingValue.ToString()) // Ensure that the RatingValue is correctly parsed to int
+                r => int.Parse(r.RatingValue.ToString())
             );
 
             namesList.Add(new NameViewModel
@@ -111,4 +114,6 @@
 
         isImporting = false;
     }
+}
+}
 }

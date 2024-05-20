@@ -18,11 +18,12 @@
     <Authorized>
         <h1>Top 10 names decided by group: @groupName</h1>
         <button @onclick="ImportData" disabled="@isImporting">Import Data</button>
+        <RadzenButton Text="Clear current user data" Click="@ClearData" Style="margin-left: 10px;" />
         @if (isImporting)
         {
             <p><em>Importing data...</em></p>
         }
-        else if (importMessage != null)
+        else if (!string.IsNullOrEmpty(importMessage))
         {
             <p>@importMessage</p>
         }
@@ -45,7 +46,8 @@
     private string groupName;
     private Models.Group? currentGroup;
     private List<NameViewModel> namesList = new List<NameViewModel>();
-    private Dictionary<string, string> userRatings = new Dictionary<string, string>();
+    private List<RatedNameViewModel> ratedNames = new List<RatedNameViewModel>();
+    private int? groupId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -55,30 +57,29 @@
         if (currentUser == null)
         {
             NavigationManager.NavigateTo("account/login", true);
+            return;
         }
-        else
-        {
-            currentGroup = await DbContext.Groups.FindAsync(currentUser.GroupId);
-            groupName = currentGroup?.GroupName ?? "No group assigned";
 
-            if (currentGroup != null)
-            {
-                namesList = await LoadNamesAsync();
-            }
+        currentGroup = await DbContext.Groups.FindAsync(currentUser.GroupId);
+        groupName = currentGroup?.GroupName ?? "No group assigned";
+
+        if (currentGroup != null)
+        {
+            namesList = await LoadNamesAsync(currentUser.GroupId.Value);
+            ratedNames = await LoadRatedNamesAsync(currentUser.GroupId.Value);
         }
     }
 
-    private async Task<List<NameViewModel>> LoadNamesAsync()
+    private async Task<List<NameViewModel>> LoadNamesAsync(int groupId)
     {
         var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var names = await DbContext.Names
-            .Where(n => DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId))
+            .Where(n => DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId && r.GroupId == groupId))
             .ToListAsync();
-        var namesList = new List<NameViewModel>();
 
-        foreach (var name in names)
+        var namesList = names.Select(async name =>
         {
-            var ratings = await DbContext.Ratings.Where(r => r.NameId == name.Id && r.GroupId == currentGroup.GroupId).ToListAsync();
+            var ratings = await DbContext.Ratings.Where(r => r.NameId == name.Id && r.GroupId == groupId).ToListAsync();
             var averageRating = ratings.Any() ? ratings.Average(r => r.RatingValue) : 0.0;
 
             var userRatings = ratings.ToDictionary(
@@ -86,15 +87,15 @@
                 r => int.Parse(r.RatingValue.ToString())
             );
 
-            namesList.Add(new NameViewModel
-                {
-                    NameText = name.NameText,
-                    AverageRating = averageRating,
-                    UserRatings = userRatings
-                });
-        }
+            return new NameViewModel
+            {
+                NameText = name.NameText,
+                AverageRating = averageRating,
+                UserRatings = userRatings
+            };
+        }).ToList();
 
-        return namesList.OrderByDescending(n => n.AverageRating).ToList();
+        return (await Task.WhenAll(namesList)).OrderByDescending(n => n.AverageRating).ToList();
     }
 
     private async Task ImportData()
@@ -104,16 +105,47 @@
 
         try
         {
-            await DataImportService.ImportCsvDataAsync();
-            importMessage = "Data imported successfully!";
+            await DataImportService.ImportCsv();
+            importMessage = "Data import successful!";
         }
         catch (Exception ex)
         {
-            importMessage = $"An error occurred: {ex.Message}";
+            importMessage = $"Data import failed: {ex.Message}";
         }
+        finally
+        {
+            isImporting = false;
+        }
+    }
 
-        isImporting = false;
+    private async Task ClearData()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var currentUser = await UserManager.GetUserAsync(authState.User);
+
+        if (currentUser != null)
+        {
+            var userRatings = DbContext.Ratings.Where(r => r.UserId == currentUser.Id);
+            DbContext.Ratings.RemoveRange(userRatings);
+            await DbContext.SaveChangesAsync();
+            namesList.Clear();
+            ratedNames.Clear();
+        }
+    }
+
+    private async Task<List<RatedNameViewModel>> LoadRatedNamesAsync(int groupId)
+    {
+        var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var ratedNames = await DbContext.Ratings
+            .Where(r => r.GroupId == groupId && r.UserId == userId)
+            .Select(r => new RatedNameViewModel
+            {
+                NameId = r.NameId,
+                RatingValue = r.RatingValue
+            })
+            .ToListAsync();
+
+        return ratedNames;
     }
 }
-}
-}
+

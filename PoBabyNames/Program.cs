@@ -35,24 +35,23 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-// Bind Google settings
-//_ = builder.Services.Configure<GoogleAuthConfig>(builder.Configuration.GetSection("Google"));
 
-//_ = builder.Services.AddAuthentication().AddGoogle(googleOptions =>
-//{
-//    // Resolve Google configuration options
-//    GoogleAuthConfig? googleConfig = builder.Configuration.GetSection("Google").Get<GoogleAuthConfig>();
-//    googleOptions.ClientId = googleConfig.ClientId;
-//    googleOptions.ClientSecret = googleConfig.ClientSecret;
-//    googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
-//});
-
-
-builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+//works locally and get secret
+_ = builder.Services.AddAuthentication().AddGoogle(googleOptions =>
 {
-    googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-    googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    // Resolve Google configuration options
+    GoogleAuthConfig? googleConfig = builder.Configuration.GetSection("Google").Get<GoogleAuthConfig>();
+    googleOptions.ClientId = googleConfig.ClientId;
+    googleOptions.ClientSecret = googleConfig.ClientSecret;
+    googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
 });
+
+
+//builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+//{
+//    googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+//    googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+//});
 
 builder.Services.AddScoped<Radzen.DialogService>();
 builder.Services.AddScoped<DataImportService>();

@@ -11,18 +11,10 @@
 
 <AuthorizeView>
     <Authorized>
-        @if (!string.IsNullOrEmpty(Message))
-        {
-            <div class="alert alert-info">@Message</div>
-        }
-
-        @if (string.IsNullOrEmpty(Message))
-        {
-            <RadzenDropDown Data="@groups" TextProperty="GroupName" ValueProperty="GroupId" @bind-Value="selectedGroupId"
-                            Style="width: 300px;" Placeholder="Select a group" />
-            <RadzenTextBox @bind-Value="newGroupName" Style="width: 300px;" Placeholder="Or enter new group name" />
-            <RadzenButton Text="Submit" Click="@SubmitGroup" />
-        }
+        <RadzenDropDown Data="@groups" TextProperty="GroupName" ValueProperty="GroupId" @bind-Value="selectedGroupId"
+                        Style="width: 300px;" Placeholder="Select a group" />
+        <RadzenTextBox @bind-Value="newGroupName" Style="width: 300px;" Placeholder="Or enter new group name" />
+        <RadzenButton Text="Join/Change Group" Click="@SubmitGroup" />
     </Authorized>
 
     <NotAuthorized>
@@ -34,7 +26,6 @@
     List<PoBabyNames.Models.Group> groups = new List<PoBabyNames.Models.Group>();
     int? selectedGroupId;
     string newGroupName;
-    string Message; // Add this line
 
     protected override async Task OnInitializedAsync()
     {
@@ -48,10 +39,6 @@
         {
             groups = await DbContext.Groups.ToListAsync();
             selectedGroupId = currentUser.GroupId; // Assuming GroupId is a property of the ApplicationUser
-            if (selectedGroupId.HasValue)
-            {
-                Message = "GROUP ALREADY SET";
-            }
         }
     }
 

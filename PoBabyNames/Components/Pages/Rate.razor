@@ -31,7 +31,7 @@
             {
                 <div class="alert alert-info">No more names to rate.</div>
             }
-            <RadzenButton Text="Reset Ratings" Click="@ResetRatings" Style="margin-left: 10px;" />
+            <RadzenButton Text="Reset Ratings for currnet user and group" Click="@ResetRatings" Style="margin-left: 10px;" />
         </div>
     </Authorized>
     <NotAuthorized>
@@ -47,6 +47,7 @@
     private int? groupId = null; // Assume a group ID is set
     private int totalNames;
     private int ratedNamesCount;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,6 +113,6 @@
         ratedNamesCount = await DbContext.Ratings.CountAsync(r => r.UserId == userId && r.GroupId == groupId);
         currentName = await DbContext.Names
             .OrderBy(n => n.Id)
-            .FirstOrDefaultAsync(n => !DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId));
+            .FirstOrDefaultAsync(n => !DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId && r.GroupId == groupId));
     }
 }

@@ -49,4 +49,9 @@ public class DataImportService
             Console.WriteLine($"An error occurred: {ex.Message}");
         }
     }
+
+    public async Task ImportCsv()
+    {
+        await ImportCsvDataAsync();
+    }
 }

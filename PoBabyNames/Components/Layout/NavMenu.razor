@@ -1,6 +1,12 @@
 ﻿@implements IDisposable
 
+@using Microsoft.AspNetCore.Identity
+@using PoBabyNames.Data
+
 @inject NavigationManager NavigationManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ApplicationDbContext DbContext
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -38,6 +44,9 @@
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
+                    <span class="nav-link">Group: @groupName</span>
+                </div>
+                <div class="nav-item px-3">
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
@@ -65,11 +74,18 @@
 
 @code {
     private string? currentUrl;
+    private string? groupName;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
+        var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
+        if (currentUser?.GroupId != null)
+        {
+            var group = await DbContext.Groups.FindAsync(currentUser.GroupId);
+            groupName = group?.GroupName ?? "No group assigned";
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)

@@ -23,9 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="boy_names_2022.csv">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+ 
     <None Update="names100.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

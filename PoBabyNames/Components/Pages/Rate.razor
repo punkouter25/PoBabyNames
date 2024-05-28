@@ -1,13 +1,13 @@
-﻿   @page "/rate"
+﻿@page "/rate"
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using PoBabyNames.Data
 @using PoBabyNames.Models
 @inject NavigationManager NavigationManager
-   @using Radzen
-   @inject ApplicationDbContext DbContext
-   @using Microsoft.AspNetCore.Authorization
-   @inject AuthenticationStateProvider AuthenticationStateProvider
+@using Radzen
+@inject ApplicationDbContext DbContext
+@using Microsoft.AspNetCore.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
 @inject UserManager<ApplicationUser> UserManager
 @inject IHttpContextAccessor HttpContextAccessor
@@ -18,7 +18,8 @@
             @if (groupId.HasValue && currentName != null)
             {
                 <p>Rate the name: @currentName.NameText</p>
-                <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1" ShowTicks="true" ShowValue="true" />
+                <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1"
+                    ShowTicks="true" ShowValue="true" />
                 <p>Current Rating: @currentRating</p>
                 <p>Rated Names = @ratedNamesCount out of @totalNames</p>
                 <RadzenButton Text="Submit" Click="@SubmitRating" />
@@ -31,7 +32,8 @@
             {
                 <div class="alert alert-info">No more names to rate.</div>
             }
-            <RadzenButton Text="Reset Ratings for currnet user and group" Click="@ResetRatings" Style="margin-left: 10px;" />
+            <RadzenButton Text="Reset Ratings for currnet user and group" Click="@ResetRatings"
+                Style="margin-left: 10px;" />
         </div>
     </Authorized>
     <NotAuthorized>
@@ -94,7 +96,8 @@
 
     private async Task ResetRatings()
     {
-        var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = (await
+        AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var ratings = await DbContext.Ratings.Where(r => r.UserId == userId && r.GroupId == groupId).ToListAsync();
         DbContext.Ratings.RemoveRange(ratings);
         await DbContext.SaveChangesAsync();
@@ -108,11 +111,12 @@
             currentName = null; // Ensure no name is loaded
             return;
         }
-        var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = (await
+        AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         totalNames = await DbContext.Names.CountAsync();
         ratedNamesCount = await DbContext.Ratings.CountAsync(r => r.UserId == userId && r.GroupId == groupId);
         currentName = await DbContext.Names
-            .OrderBy(n => n.Id)
-            .FirstOrDefaultAsync(n => !DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId && r.GroupId == groupId));
+        .OrderBy(n => n.Id)
+        .FirstOrDefaultAsync(n => !DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId && r.GroupId == groupId));
     }
 }

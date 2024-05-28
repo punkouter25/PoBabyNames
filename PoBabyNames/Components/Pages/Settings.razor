@@ -15,6 +15,12 @@
                         Style="width: 300px;" Placeholder="Select a group" />
         <RadzenTextBox @bind-Value="newGroupName" Style="width: 300px;" Placeholder="Or enter new group name" />
         <RadzenButton Text="Join/Change Group" Click="@SubmitGroup" />
+        <RadzenGrid Data="@groupUsers" TItem="ApplicationUser" ColumnWidth="auto" Style="width:100%; margin-top: 20px;">
+            <Columns>
+                <RadzenGridColumn TItem="ApplicationUser" Property="UserName" Title="Username" />
+                <RadzenGridColumn TItem="ApplicationUser" Property="Email" Title="Email" />
+            </Columns>
+        </RadzenGrid>
     </Authorized>
 
     <NotAuthorized>
@@ -26,6 +32,7 @@
     List<PoBabyNames.Models.Group> groups = new List<PoBabyNames.Models.Group>();
     int? selectedGroupId;
     string newGroupName;
+    List<ApplicationUser> groupUsers = new List<ApplicationUser>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -39,6 +46,10 @@
         {
             groups = await DbContext.Groups.ToListAsync();
             selectedGroupId = currentUser.GroupId; // Assuming GroupId is a property of the ApplicationUser
+            if (selectedGroupId.HasValue)
+            {
+                groupUsers = await LoadGroupUsersAsync(selectedGroupId.Value);
+            }
         }
     }
 
@@ -68,7 +79,13 @@
             var currentUser = await UserManager.GetUserAsync(HttpContextAccessor.HttpContext.User);
             currentUser.GroupId = selectedGroupId.Value;
             await UserManager.UpdateAsync(currentUser);
+            groupUsers = await LoadGroupUsersAsync(selectedGroupId.Value);
             NavigationManager.NavigateTo("/", forceLoad: true); // Redirect to home page
         }
+    }
+
+    private async Task<List<ApplicationUser>> LoadGroupUsersAsync(int groupId)
+    {
+        return await DbContext.Users.Where(u => u.GroupId == groupId).ToListAsync();
     }
 }

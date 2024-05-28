@@ -4,6 +4,11 @@
       "type": "sqlite",
       "connectionId": "ConnectionStrings:DefaultConnection",
       "dynamicId": null
+    },
+    "secrets1": {
+      "type": "secrets",
+      "connectionId": "VaultUri",
+      "dynamicId": null
     }
   }
 }

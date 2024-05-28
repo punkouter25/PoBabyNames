@@ -11,6 +11,7 @@
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @using System.Security.Claims
+@inject SignInManager<ApplicationUser> SignInManager
 
 <PageTitle>Home</PageTitle>
 
@@ -18,7 +19,8 @@
     <Authorized>
         <h1>Top 10 names decided by group: @groupName</h1>
         <button @onclick="ImportData" disabled="@isImporting">Import Data</button>
-        <RadzenButton Text="Clear current user data" Click="@ClearData" Style="margin-left: 10px;" />
+        <RadzenButton Text="Clear current user data / delete current user" Click="@ClearData"
+            Style="margin-left: 10px;" />
         @if (isImporting)
         {
             <p><em>Importing data...</em></p>
@@ -72,10 +74,11 @@
 
     private async Task<List<NameViewModel>> LoadNamesAsync(int groupId)
     {
-        var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = (await
+        AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var names = await DbContext.Names
-            .Where(n => DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId && r.GroupId == groupId))
-            .ToListAsync();
+        .Where(n => DbContext.Ratings.Any(r => r.NameId == n.Id && r.UserId == userId && r.GroupId == groupId))
+        .ToListAsync();
 
         var namesList = names.Select(async name =>
         {
@@ -83,19 +86,22 @@
             var averageRating = ratings.Any() ? ratings.Average(r => r.RatingValue) : 0.0;
 
             var userRatings = ratings.ToDictionary(
-                r => r.UserId.ToString(),
-                r => int.Parse(r.RatingValue.ToString())
-            );
+    r => r.UserId.ToString(),
+    r => int.Parse(r.RatingValue.ToString())
+    );
 
             return new NameViewModel
-            {
-                NameText = name.NameText,
-                AverageRating = averageRating,
-                UserRatings = userRatings
-            };
+                {
+                    NameText = name.NameText,
+                    AverageRating = averageRating,
+                    UserRatings = userRatings
+                };
         }).ToList();
 
-        return (await Task.WhenAll(namesList)).OrderByDescending(n => n.AverageRating).ToList();
+        return (await Task.WhenAll(namesList))
+        .OrderByDescending(n => n.AverageRating)
+        .Take(10)
+        .ToList();
     }
 
     private async Task ImportData()
@@ -127,25 +133,28 @@
         {
             var userRatings = DbContext.Ratings.Where(r => r.UserId == currentUser.Id);
             DbContext.Ratings.RemoveRange(userRatings);
+            DbContext.Users.Remove(currentUser);
             await DbContext.SaveChangesAsync();
             namesList.Clear();
             ratedNames.Clear();
+            await SignInManager.SignOutAsync(); // Log out the user
+            NavigationManager.NavigateTo("/", true);
         }
     }
 
     private async Task<List<RatedNameViewModel>> LoadRatedNamesAsync(int groupId)
     {
-        var userId = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = (await
+        AuthenticationStateProvider.GetAuthenticationStateAsync()).User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var ratedNames = await DbContext.Ratings
-            .Where(r => r.GroupId == groupId && r.UserId == userId)
-            .Select(r => new RatedNameViewModel
+        .Where(r => r.GroupId == groupId && r.UserId == userId)
+        .Select(r => new RatedNameViewModel
             {
                 NameId = r.NameId,
                 RatingValue = r.RatingValue
             })
-            .ToListAsync();
+        .ToListAsync();
 
         return ratedNames;
     }
 }
-

@@ -17,20 +17,29 @@
         <div>
             @if (groupId.HasValue && currentName != null)
             {
-                <p>Rate the name: @currentName.NameText</p>
-                <RadzenSlider @bind-Value="currentRating" Min="0" Max="5" Style="width: 300px;" TickInterval="1"
-                    ShowTicks="true" ShowValue="true" />
-                <p>Current Rating: @currentRating</p>
-                <p>Rated Names = @ratedNamesCount out of @totalNames</p>
-                <RadzenButton Text="Submit" Click="@SubmitRating" />
+                    <p>Rate the name: @currentName.NameText</p>
+
+
+
+
+            @for (int i = 1; i <= 5; i++)
+                {
+                    var localI = i;
+                    <button @onclick="() => SubmitRating(localI)" class="btn btn-primary m-1">@localI</button>
+                }
+
+                    <p>Rated Names = @ratedNamesCount out of @totalNames</p>
+
+
+
             }
             else if (!groupId.HasValue)
             {
-                <div class="alert alert-info">Please select a group to start rating names.</div>
+                    <div class="alert alert-info">Please select a group to start rating names.</div>
             }
             else
             {
-                <div class="alert alert-info">No more names to rate.</div>
+                    <div class="alert alert-info">No more names to rate.</div>
             }
             <RadzenButton Text="Reset Ratings for currnet user and group" Click="@ResetRatings"
                 Style="margin-left: 10px;" />
@@ -71,8 +80,9 @@
         }
     }
 
-    private async Task SubmitRating()
+    private async Task SubmitRating(int ratingNumber)
     {
+        currentRating = ratingNumber;
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 

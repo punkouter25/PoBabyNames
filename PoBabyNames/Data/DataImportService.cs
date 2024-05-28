@@ -32,8 +32,8 @@ public class DataImportService
 
             using var reader = new StreamReader(filePath);
             using var csv = new CsvReader(reader, new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = true });
-            //var records = csv.GetRecords<Name>().ToList(); // Convert to List to catch any parsing errors
-            var records = csv.GetRecords<Name>().Take(10).ToList(); // Fetch only the first 10 records
+            var records = csv.GetRecords<Name>().ToList(); // Convert to List to catch any parsing errors
+           // var records = csv.GetRecords<Name>().Take(10).ToList(); // Fetch only the first 10 records
             if (records.Any())
             {
                 _dbContext.Names.AddRange(records);

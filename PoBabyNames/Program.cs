@@ -4,8 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using PoBabyNames.Components;
 using PoBabyNames.Components.Account;
 using PoBabyNames.Data;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//var keyVaultEndpoint = new Uri(Environment.GetEnvironmentVariable("VaultUri"));
+//builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new VisualStudioCredential());
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

@@ -40,22 +40,14 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 
-//works locally and get secret
-_ = builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+
+
+
+builder.Services.AddAuthentication().AddGoogle(googleOptions =>
 {
-   // Resolve Google configuration options
-   GoogleAuthConfig? googleConfig = builder.Configuration.GetSection("Google").Get<GoogleAuthConfig>();
-   googleOptions.ClientId = "351039864593-nf5gfftc6je3tsu1dt4l1e2jnt309ub1.apps.googleusercontent.com";
-   googleOptions.ClientSecret = "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";
-   googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
+    googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+    googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 });
-
-
-// builder.Services.AddAuthentication().AddGoogle(googleOptions =>
-// {
-//     googleOptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-//     googleOptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-// });
 
 builder.Services.AddScoped<Radzen.DialogService>();
 builder.Services.AddScoped<DataImportService>();

@@ -17,32 +17,26 @@
         <div>
             @if (groupId.HasValue && currentName != null)
             {
-                    <p>Rate the name: @currentName.NameText</p>
+                <p>Rate the name: @currentName.NameText</p>
 
-
-
-
-            @for (int i = 1; i <= 5; i++)
+                @for (int i = 1; i <= 5; i++)
                 {
                     var localI = i;
                     <button @onclick="() => SubmitRating(localI)" class="btn btn-primary m-1">@localI</button>
                 }
 
-                    <p>Rated Names = @ratedNamesCount out of @totalNames</p>
-
-
-
+                <p>Rated Names = @ratedNamesCount out of @totalNames</p>
             }
             else if (!groupId.HasValue)
             {
-                    <div class="alert alert-info">Please select a group to start rating names.</div>
+                <div class="alert alert-info">Please select a group to start rating names.</div>
             }
             else
             {
-                    <div class="alert alert-info">No more names to rate.</div>
+                <div class="alert alert-info">No more names to rate.</div>
             }
-            <RadzenButton Text="Reset Ratings for currnet user and group" Click="@ResetRatings"
-                Style="margin-left: 10px;" />
+           @*  <RadzenButton Text="Reset Ratings for currnet user and group" Click="@ResetRatings"
+                          Style="margin-left: 10px;" /> *@
         </div>
     </Authorized>
     <NotAuthorized>
@@ -58,7 +52,6 @@
     private int? groupId = null; // Assume a group ID is set
     private int totalNames;
     private int ratedNamesCount;
-
 
     protected override async Task OnInitializedAsync()
     {

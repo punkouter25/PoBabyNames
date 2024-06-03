@@ -18,9 +18,9 @@
 <AuthorizeView>
     <Authorized>
         <h1>Top 10 names decided by group: @groupName</h1>
+
         <button @onclick="ImportData" disabled="@isImporting">Import Data</button>
-        <RadzenButton Text="Clear current user data / delete current user" Click="@ClearData"
-            Style="margin-left: 10px;" />
+        <RadzenButton Text="Clear current user data" Click="@ClearData" Style="margin-left: 10px;" />
         @if (isImporting)
         {
             <p><em>Importing data...</em></p>
@@ -104,25 +104,7 @@
         .ToList();
     }
 
-    private async Task ImportData()
-    {
-        isImporting = true;
-        importMessage = null;
 
-        try
-        {
-            await DataImportService.ImportCsv();
-            importMessage = "Data import successful!";
-        }
-        catch (Exception ex)
-        {
-            importMessage = $"Data import failed: {ex.Message}";
-        }
-        finally
-        {
-            isImporting = false;
-        }
-    }
 
     private async Task ClearData()
     {
@@ -133,6 +115,7 @@
         {
             var userRatings = DbContext.Ratings.Where(r => r.UserId == currentUser.Id);
             DbContext.Ratings.RemoveRange(userRatings);
+            DbContext.Groups.RemoveRange(DbContext.Groups); // Added line to remove all groups
             DbContext.Users.Remove(currentUser);
             await DbContext.SaveChangesAsync();
             namesList.Clear();
@@ -157,4 +140,53 @@
 
         return ratedNames;
     }
+
+
+    private async Task ImportData()
+    {
+        isImporting = true;
+        importMessage = null;
+
+        try
+        {
+            await DataImportService.ImportCsv();
+            importMessage = "Data import successful!";
+        }
+        catch (Exception ex)
+        {
+            importMessage = $"Data import failed: {ex.Message}";
+        }
+        finally
+        {
+            isImporting = false;
+        }
+    }
+
+
+
+    // private async Task ImportData(InputFileChangeEventArgs e)
+    // {
+    //     var file = e.File;
+    //     if (file != null)
+    //     {
+    //         using var stream = file.OpenReadStream();
+    //         await DataImportService.ImportCsv(stream);
+    //     }
+    // }
+
+    // private async void OnSubmit()
+    // {
+    //     //     foreach (var file in selectedFiles)
+    //     //     {
+    //     //         Stream stream = file.OpenReadStream();
+    //     //         var path = $"{env.WebRootPath}\\{file.Name}";
+    //     //         FileStream fs = File.Create(path);
+    //     //         await stream.CopyToAsync(fs);
+    //     //         stream.Close();
+    //     //         fs.Close();
+    //     //     }
+    //     //     Message = $"{selectedFiles.Count} file(s)
+    //     // uploaded on server";
+    //     this.StateHasChanged();
+    // }
 }
